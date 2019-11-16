@@ -107,7 +107,6 @@
     });
   };
   
-
   // Produce a duplicate-free version of the array.
   _.uniq = function(array, isSorted, iterator) {
 
@@ -203,8 +202,7 @@
   //     return total + number * number;
   //   }); // should be 5, regardless of the iterator function passed in
   //          No accumulator is given so the first element is used.
-  _.reduce = function(collection, iterator, accumulator) {
-    
+  _.reduce = function(collection, iterator, accumulator) { 
 
     if (accumulator === undefined) {
       accumulator = collection[0];
@@ -216,10 +214,6 @@
     });
 
      return accumulator;
-
-    /*return _.last(_.map(collection, function(el) {
-        return accumulator = iterator(accumulator, el);
-    }));*/
 
   };
 
@@ -239,12 +233,30 @@
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
     // TIP: Try re-using reduce() here.
+    var iterator = iterator || _.identity;
+
+    return _.reduce(collection, function(doesMatch, item) {
+      //var test = iterator || _.identity; //it works
+      //var iterator = iterator || _.identity; //it doesn't work
+     
+      if (!doesMatch) {
+        return false;
+      }  
+      return !!(iterator(item)); //return !!(test(item));
+    }, true);
   };
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
   _.some = function(collection, iterator) {
-    // TIP: There's a very clever way to re-use every() here.
+    var iterator = iterator || _.identity;
+
+    return _.reduce(collection, function(itPassed, item) {
+      if (itPassed) {
+        return true;
+      }    
+      return !!(iterator(item));
+    }, false);
   };
 
 
@@ -267,11 +279,37 @@
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
+
+    _.each(arguments, function(sourceObj) {
+        for (var key in sourceObj) {
+          obj[key] = sourceObj[key];
+        }
+    });
+  
+    /*for (var i = 1; i < arguments.length; i++) {
+      for (var key in arguments[i]) {
+        obj[key] = arguments[i][key];
+      }
+    } */
+
+    return obj;
+
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
+
+    _.each(arguments, function(sourceObj) {
+        for (var key in sourceObj) {
+          if (!(key in obj)) {
+            obj[key] = sourceObj[key];
+          }
+        }
+    });
+
+   return obj;
+
   };
 
 
@@ -315,6 +353,18 @@
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
+
+    var cache = {};
+
+    return function(){
+      var key = JSON.stringify(arguments);
+      if (cache[key]){
+        return cache[key];
+      } else {
+        cache[key] = func.apply(null, arguments);
+        return cache[key]; 
+      }
+    }
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -324,6 +374,14 @@
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
+
+    var funcArguments = _.map(arguments, function(item) {
+      return item; }).slice(2);
+
+    setTimeout(function () {
+      func.apply(this, funcArguments);
+    }, wait);
+
   };
 
 
@@ -338,8 +396,22 @@
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
-  };
 
+    var copyArray = array.slice();
+
+    // The modern version of Fisher-Yates Algorithm
+    //(from the book The Art of Computer Programming by Donald E. Knuth)
+    for (var i = copyArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * i);
+      const temp = copyArray[i];
+      copyArray[i] = copyArray[j];
+      copyArray[j] = temp;
+
+    }
+
+    return copyArray;
+    
+  };   
 
   /**
    * ADVANCED
